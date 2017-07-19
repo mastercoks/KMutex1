@@ -5,11 +5,8 @@
  */
 package br.edu.uesb.kmutex1;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -18,7 +15,9 @@ import java.util.logging.Logger;
 public class Main {
 
     public static Recurso[] RECURSOS;
-    public static int recursos_uso = 0;
+    public static int RECURSOS_USO = -1;
+    public static int[] PROCESSOS_CS = {1, 2, 5};
+    public static int[] PROCESSOS_CORRETOS = {1, 2};
 
     private final Processo processo;
 
@@ -41,13 +40,6 @@ public class Main {
         }
     }
 
-    public static void imprimirRecursos() {
-        for (Recurso recurso_aux : Main.RECURSOS) {
-            System.out.print(recurso_aux + " ");
-        }
-        System.out.println();
-    }
-
     public static void main(String[] args) {
         Main[] main = new Main[6];
         for (int i = 0; i < main.length; i++) {
@@ -55,23 +47,20 @@ public class Main {
         }
         gerarRecursos();
 
+//        System.out.println("Recursos: " + Arrays.toString(RECURSOS));
         for (Main main1 : main) {
             main1.processo.iniciar();
         }
-        try {
-            imprimirRecursos();
-            Thread.sleep(2000);
-            main[5].processo.getRaymond().request_resource();
-            main[2].processo.getRaymond().request_resource();
-            main[5].processo.getRaymond().release_resource();
-            main[2].processo.getRaymond().release_resource();
-            imprimirRecursos();
-
-        } catch (IOException | ClassNotFoundException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        }
+//        try {
+//            Thread.sleep(2000);
+//            main[5].processo.getRaymond().request_resource();
+//            main[2].processo.getRaymond().request_resource();
+//            main[1].processo.getRaymond().request_resource();
+//            Thread.sleep(10000);
+//            System.out.println("Recursos: " + Arrays.toString(RECURSOS));
+//        } catch (InterruptedException | IOException | ClassNotFoundException ex) {
+//            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+//        }
 
     }
 }

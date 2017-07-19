@@ -18,7 +18,6 @@ public class Mensagem implements Serializable {
     private int id_destino;
     private TipoMensagem tipo;
     private int valor;
-    private int H;
 
     public Mensagem(int id_origem, int id_destino, TipoMensagem tipo) {
         this.id_origem = id_origem;
@@ -31,14 +30,6 @@ public class Mensagem implements Serializable {
         this.id_destino = id_destino;
         this.tipo = tipo;
         this.valor = valor;
-    }
-
-    public Mensagem(int id_origem, int id_destino, TipoMensagem tipo, int valor, int H) {
-        this.id_origem = id_origem;
-        this.id_destino = id_destino;
-        this.tipo = tipo;
-        this.valor = valor;
-        this.H = H;
     }
 
     public int getId_origem() {
@@ -71,14 +62,6 @@ public class Mensagem implements Serializable {
 
     public void setTipo(TipoMensagem tipo) {
         this.tipo = tipo;
-    }
-
-    public int getH() {
-        return H;
-    }
-
-    public void setH(int H) {
-        this.H = H;
     }
 
 }

@@ -24,6 +24,7 @@ public class Processo {
     private int id;
     private final Raymond raymond;
     private int quant_recursos;
+    private boolean crashed;
 
     public Processo(List<Integer> processos, int id, int quant_recursos) {
         this.executor_service = Executors.newCachedThreadPool();
@@ -31,6 +32,7 @@ public class Processo {
         this.id = id;
         this.raymond = new Raymond(processos.size(), this);
         this.quant_recursos = quant_recursos;
+        this.crashed = false;
     }
 
     public void iniciar() {
@@ -91,6 +93,14 @@ public class Processo {
 
     public void setQuant_recursos(int quant_recursos) {
         this.quant_recursos = quant_recursos;
+    }
+
+    public boolean isCrashed() {
+        return crashed;
+    }
+
+    public void setCrashed(boolean crashed) {
+        this.crashed = crashed;
     }
 
 }

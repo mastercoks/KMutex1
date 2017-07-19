@@ -5,7 +5,6 @@
  */
 package br.edu.uesb.kmutex1;
 
-import br.edu.uesb.kmutex1.enumerado.TipoValor;
 import java.util.Random;
 
 /**
@@ -14,36 +13,23 @@ import java.util.Random;
  */
 public class Recurso {
 
-    private TipoValor valor;
+    private int valor;
 
     public Recurso() {
-        valor = escolherValor();
+        valor = new Random().nextInt(100);
     }
 
-    public TipoValor getValor() {
+    public int getValor() {
         return valor;
     }
 
-    public void setValor(TipoValor valor) {
+    public void setValor(int valor) {
         this.valor = valor;
-    }
-
-    public TipoValor escolherValor() {
-        int num_rand = new Random().nextInt(3);
-        switch (num_rand) {
-            case 0:
-                return TipoValor.STAR_WARS;
-            case 1:
-                return TipoValor.STAR_TREK;
-            case 2:
-                return TipoValor.NENHUMA;
-        }
-        return null;
     }
 
     @Override
     public String toString() {
-        return valor.toString();
+        return String.valueOf(valor);
     }
     
     

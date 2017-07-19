@@ -14,11 +14,13 @@ import br.edu.uesb.kmutex1.rede.receber.ReceberCrash;
 import br.edu.uesb.kmutex1.rede.receber.ReceberInit;
 import br.edu.uesb.kmutex1.rede.receber.ReceberReply;
 import br.edu.uesb.kmutex1.rede.receber.ReceberRequest;
+import br.edu.uesb.kmutex1.rede.receber.ReceberYouAlive;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -65,28 +67,33 @@ public class Raymond implements Runnable {
         }
     }
 
-    @SuppressWarnings("empty-statement")
-    public void request_resource() throws IOException, UnknownHostException, ClassNotFoundException {
+    public void request_resource() throws IOException, UnknownHostException, ClassNotFoundException, InterruptedException {
         System.out.println("Processo[" + processo.getId() + "]: Solicitando entrada na CS.");
         state = Estado.SOLICITANDO;
         last = H + 1;
         perm_count = 0;
         for (int processoj : processo.getProcessos()) {
             if (processoj != processo.getId() && !crashed.contains(processoj)) {
-                Mensagem mensagem = new Mensagem(processo.getId(), processoj, TipoMensagem.REQUEST, last, H);
+                Mensagem mensagem = new Mensagem(processo.getId(), processoj, TipoMensagem.REQUEST, last);
                 processo.executar(new Enviar("localhost", (7200 + processoj), mensagem));
                 reply_count[processoj]++;
             }
         }
-        while (perm_count >= (n - processo.getQuant_recursos()));
+        while (true) {
+            System.out.print("");
+            if (perm_count >= (n - processo.getQuant_recursos())) {
+                break;
+            }
+        }
         state = Estado.CS;
-        Main.recursos_uso++;
-        mudarRecurso();
+        Main.RECURSOS_USO++;
+
         System.out.println("Processo[" + processo.getId() + "]: Entrou na CS.");
+        mudarRecurso();
     }
 
-    public void release_resource() throws IOException, UnknownHostException, ClassNotFoundException {
-        System.out.println("Processo[" + processo.getId() + "]: Saindo da CS.");
+    private void release_resource() throws IOException, UnknownHostException, ClassNotFoundException {
+//        System.out.println("Processo[" + processo.getId() + "]: Saindo da CS.");
         state = Estado.NAO_SOLICITANDO;
         for (int processoj : processo.getProcessos()) {
             if (processoj != processo.getId() && defer_count[processoj] != 0 && !crashed.contains(processoj)) {
@@ -95,8 +102,9 @@ public class Raymond implements Runnable {
                 defer_count[processoj] = 0;
             }
         }
-        Main.recursos_uso--;
+        Main.RECURSOS_USO--;
         System.out.println("Processo[" + processo.getId() + "]: Saiu da CS.");
+        System.out.println(Raymond.this);
     }
 
     @Override
@@ -104,11 +112,14 @@ public class Raymond implements Runnable {
     public void run() {
         try {
 //            System.out.println("Processo[" + processo.getId() + "]: Iniciando.");
-            processo.executar(FD);
             processo.executar(new ReceberInit(processo));
             processo.executar(new ReceberRequest(processo));
             processo.executar(new ReceberReply(processo));
             processo.executar(new ReceberCrash(processo));
+            processo.executar(new ReceberYouAlive(processo));
+            Thread.sleep(500);
+            processo.executar(FD);
+            processo.executar(new Crash(processo));
             NetworkService rede = new NetworkService(7100 + processo.getId());
             broadcast(TipoMensagem.INIT);
             for (Integer processoj : processo.getProcessos()) {
@@ -122,54 +133,14 @@ public class Raymond implements Runnable {
                     }
                 }
             }
-//            System.out.println("Processo[" + processo.getId() + "]: Iniciado com sucesso!");
-            Thread.sleep(1000);
-//            System.out.println(this);
-//            while (true) {
-//                Future<Mensagem> future = processo.receber(rede);
-//                Mensagem mensagem = future.get();
-//                switch (mensagem.getTipo()) {
-//                    case ACK:
-//
-//                        break;
-//                    case INIT:
-//                        while (FD.containsSuspeito_T(mensagem.getId_origem()));
-//                        trusted.add(mensagem.getId_origem());
-//                        Mensagem resposta = new Mensagem(processo.getId(), mensagem.getId_origem(), TipoMensagem.ACK);
-//                        processo.executar(new Enviar("localhost", 7000 + mensagem.getId_origem(), resposta));
-//                        break;
-//                    case CRASH:
-//                        if (!crashed.contains(mensagem.getValor())) {
-//                            crashed.add(mensagem.getValor());
-//                            if (state.equals(Estado.SOLICITANDO) && reply_count[mensagem.getValor()] == 0) {
-//                                perm_count--;
-//                                n--;
-//                            }
-//                        }
-//                        break;
-//                    case REPLY:
-//                        if (!crashed.contains(mensagem.getId_origem())) {
-//                            reply_count[mensagem.getId_origem()] -= mensagem.getValor();
-//                            if (state == Estado.SOLICITANDO && reply_count[mensagem.getId_origem()] == 0) {
-//                                perm_count++;
-//                            }
-//                        }
-//                        break;
-//                    case REQUEST:
-//                        H = maior(H, mensagem.getH());
-//                        if (!crashed.contains(mensagem.getId_origem())) {
-//                            if (state == Estado.CS
-//                                    || equals(state == Estado.SOLICITANDO
-//                                            && (last < mensagem.getValor()))) {
-//                                defer_count[mensagem.getId_origem()]++;
-//                            } else {
-//                                Mensagem m_resposta = new Mensagem(processo.getId(), mensagem.getId_origem(), TipoMensagem.REPLY, 1);
-//                                processo.executar(new Enviar("localhost", 7000 + mensagem.getId_origem(), m_resposta));
-//                            }
-//                        }
-//                        break;
-//                }
-//            }
+            System.out.println("Processo[" + processo.getId() + "]: Iniciado com sucesso!");
+//            Thread.sleep(500 * new Random().nextInt(6));
+            Thread.sleep(500);
+            for (int processoi : Main.PROCESSOS_CS) {
+                if (processoi == processo.getId()) {
+                    request_resource();
+                }
+            }
         } catch (IOException | InterruptedException | ExecutionException | ClassNotFoundException ex) {
             Logger.getLogger(Raymond.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -259,7 +230,7 @@ public class Raymond implements Runnable {
         this.crashed = crashed;
     }
 
-    private void broadcast(TipoMensagem tipoMensagem) throws IOException, UnknownHostException, ClassNotFoundException {
+    public void broadcast( TipoMensagem tipoMensagem) throws IOException, UnknownHostException, ClassNotFoundException {
         for (Integer processoj : processo.getProcessos()) {
             if (processoj != processo.getId()) {
                 Mensagem mensagem = new Mensagem(processo.getId(), processoj, tipoMensagem);
@@ -287,7 +258,8 @@ public class Raymond implements Runnable {
                 + "\nRespostas pendentes: " + Arrays.toString(reply_count)
                 + "\nRespostas deferidas: " + Arrays.toString(defer_count)
                 + "\nConfiaveis: " + trusted
-                + "\nDefeituosos: " + crashed + "\n";
+                + "\nDefeituosos: " + crashed 
+                + "\nRecursos: " + Arrays.toString(Main.RECURSOS) + "\n";
     }
 
     public boolean containsCrashed(Integer processoj) {
@@ -322,8 +294,16 @@ public class Raymond implements Runnable {
         perm_count--;
     }
 
-    private void mudarRecurso() {
-        Main.RECURSOS[Main.recursos_uso-1].escolherValor();
-    }
+    private void mudarRecurso() throws IOException, UnknownHostException, ClassNotFoundException, InterruptedException {
 
+        if (Main.RECURSOS_USO < Main.RECURSOS.length) {
+            System.out.println(Raymond.this);
+            Thread.sleep(3000);
+            Main.RECURSOS[Main.RECURSOS_USO].setValor(new Random().nextInt(100));
+            System.out.println("Processo[" + processo.getId() + "]: Recurso[" + (Main.RECURSOS_USO) + "] mudado para: " + Main.RECURSOS[Main.RECURSOS_USO]);
+            release_resource();
+        } else {
+            System.err.println("Processo[" + processo.getId() + "]: Erro ao acessar a REGIÃO CRITICA!");
+        }
+    }
 }

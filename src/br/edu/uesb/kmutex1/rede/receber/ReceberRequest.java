@@ -36,20 +36,26 @@ public class ReceberRequest implements Runnable {
             while (true) {
                 Future<Mensagem> future = processo.receber(rede);
                 Mensagem mensagem = future.get();
-                if (mensagem.getTipo().equals(TipoMensagem.REQUEST)) {
+                if (processo.isCrashed()) {
 
-                    processo.getRaymond().setH(processo.getRaymond().maior(processo.getRaymond().getH(), mensagem.getH()));
+                } else if (mensagem.getTipo().equals(TipoMensagem.REQUEST)) {
+
+                    processo.getRaymond().setH(processo.getRaymond().maior(processo.getRaymond().getH(), mensagem.getValor()));
                     if (!processo.getRaymond().containsCrashed(mensagem.getId_origem())) {
                         if (processo.getRaymond().getState() == Estado.CS
-                                || equals(processo.getRaymond().isState(Estado.SOLICITANDO)
-                                        && (processo.getRaymond().getLast() < mensagem.getValor()))) {
+                                || (processo.getRaymond().isState(Estado.SOLICITANDO)
+                                && (checa(processo.getRaymond().getLast(), processo.getId(), mensagem.getValor(), mensagem.getId_origem())))) {
                             processo.getRaymond().incrementaDefer_count(mensagem.getId_origem());
+                            System.out.println("Processo[" + processo.getId() + "]: Recebeu REQUEST do processo "
+                                    + mensagem.getId_origem() + ", mas atrasou a resposta!");
                         } else {
                             Mensagem m_resposta = new Mensagem(processo.getId(), mensagem.getId_origem(), TipoMensagem.REPLY, 1);
                             processo.executar(new Enviar("localhost", 7300 + mensagem.getId_origem(), m_resposta));
+//                            System.out.println("Processo[" + processo.getId() + "]: Recebeu REQUEST do processo "
+//                                    + mensagem.getId_origem() + ", e respondeu com REPLY! " + processo.getRaymond().getState() + " last: " + processo.getRaymond().getLast() + " lastj: " + mensagem.getValor());
                         }
                     } else {
-                        System.err.println("Processo[" + processo.getId() + "]: Erro, pacote recebido do Processo " + mensagem.getId_origem() + " não era REQUEST!");
+                        System.err.println("Processo[" + processo.getId() + "]: Erro, pacote recebido do Processo " + mensagem.getId_origem() + " não era REQUEST!" + mensagem.getTipo());
                     }
                 }
             }
@@ -58,6 +64,11 @@ public class ReceberRequest implements Runnable {
         } catch (ClassNotFoundException ex) {
             System.err.println("Processo[" + processo.getId() + "]: erro ao enviar REQUEST!");
         }
+    }
+
+    private boolean checa(int lasti, int i, int lastj, int j) {
+//        System.out.println("check: " + lasti + " < " + lastj + " && " + i + " < " + j);
+        return lasti <= lastj && i < j;
     }
 
 }

@@ -36,13 +36,20 @@ public class ReceberReply implements Runnable {
             while (true) {
                 Future<Mensagem> future = processo.receber(rede);
                 Mensagem mensagem = future.get();
-                if (mensagem.getTipo().equals(TipoMensagem.REPLY)) {
+                if (processo.isCrashed()) {
+
+                } else if (mensagem.getTipo().equals(TipoMensagem.REPLY)) {
                     if (!processo.getRaymond().containsCrashed(mensagem.getId_origem())) {
                         processo.getRaymond().decrementarReply_count(mensagem.getId_origem(), mensagem.getValor());
                         if (processo.getRaymond().isState(Estado.SOLICITANDO)
                                 && processo.getRaymond().isReply_count(mensagem.getId_origem(), 0)) {
                             processo.getRaymond().incrementaPerm_count();
+                            System.out.println("Processo[" + processo.getId() + "]: Recebeu permissão do processo " + mensagem.getId_origem() + "! Quantidade recebida: " + processo.getRaymond().getPerm_count());
                         }
+//                        else {
+//                            System.err.println("Processo[" + processo.getId() + "]: Permissão do processo " 
+//                                    + mensagem.getId_origem() + " negada! Estado: " + processo.getRaymond().getState());
+//                        }
                     }
                 } else {
                     System.err.println("Processo[" + processo.getId() + "]: Erro, pacote recebido do Processo "

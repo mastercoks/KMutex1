@@ -35,12 +35,16 @@ public class ReceberCrash implements Runnable {
             while (true) {
                 Future<Mensagem> future = processo.receber(rede);
                 Mensagem mensagem = future.get();
-                if (mensagem.getTipo().equals(TipoMensagem.CRASH)) {
+                if (processo.isCrashed()) {
+
+                } else if (mensagem.getTipo().equals(TipoMensagem.CRASH)) {
                     if (!processo.getRaymond().containsCrashed(mensagem.getValor())) {
                         processo.getRaymond().crashedAdd(mensagem.getValor());
                         if (processo.getRaymond().isState(Estado.SOLICITANDO) && processo.getRaymond().isReply_count(mensagem.getValor(), 0)) {
                             processo.getRaymond().decrementarPerm_count();
                             processo.getRaymond().decrementarN();
+                            System.err.println("Processo[" + processo.getId() + "]: crash no Processo "
+                                    + mensagem.getValor() + "!");
                         }
                     }
                 } else {

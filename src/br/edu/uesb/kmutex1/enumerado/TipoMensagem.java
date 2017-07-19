@@ -14,10 +14,14 @@ public enum TipoMensagem {
     INIT,
     REQUEST,
     REPLY,
-    CRASH
+    CRASH,
+    YOU_ALIVE,  
+    I_AM_ALIVE
 //    INIT = 7000
 //    ACK = 7100
 //    REQUEST = 7200
 //    REPLY = 7300
 //    CRASH = 7400
+//    YOU_ALIVE = 7500
+//    I_AM_ALIVE = 7600
 }
